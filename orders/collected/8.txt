@@ -1,0 +1,16 @@
+Order ID: 8 
+State: Collected
+OrderedDateTime: 2025-12-09 12:29:41 
+ProgressingDateTime: 2025-12-09 12:29:51
+CollectedDateTime: 2025-12-09 12:30:04
+Items:
+ 0003    Toaster            ( 1) £  19.99
+ 0003    Toaster            ( 1) £  19.99
+ 0003    Toaster            ( 1) £  19.99
+ 0001    40 inch TV         ( 1) £ 269.00
+ 0002    DAB Radio          ( 1) £  29.99
+ 0007    USB drive          ( 1) £   6.99
+ 0003    Toaster            ( 1) £  19.99
+--------------------------------------------
+ Total                               £ 385.94
+
