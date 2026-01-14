@@ -138,13 +138,17 @@ public class CustomerView  {
         return vbSearchPage;
     }
 
+    private ListView<String> lvTrolley;
     private VBox CreateTrolleyPage() {
         Label laPageTitle = new Label("🛒🛒  Trolley 🛒🛒");
         laPageTitle.setStyle(UIStyle.labelTitleStyle);
 
-        taTrolley = new TextArea();
-        taTrolley.setEditable(false);
-        taTrolley.setPrefSize(WIDTH/2, HEIGHT-50);
+        lvTrolley = new ListView<>();
+        lvTrolley.setPrefSize(WIDTH / 2, HEIGHT - 140);
+
+        Button btnDelete = new Button("Delete");
+        btnDelete.setStyle(UIStyle.buttonStyle);
+        btnDelete.setOnAction(this::buttonClicked);
 
         Button btnCancel = new Button("Cancel");
         btnCancel.setOnAction(this::buttonClicked);
@@ -154,15 +158,18 @@ public class CustomerView  {
         btnCheckout.setOnAction(this::buttonClicked);
         btnCheckout.setStyle(UIStyle.buttonStyle);
 
-        HBox hbBtns = new HBox(10, btnCancel,btnCheckout);
-        hbBtns.setStyle("-fx-padding: 15px;");
+        HBox hbBtns = new HBox(10, btnDelete, btnCancel,btnCheckout);
         hbBtns.setAlignment(Pos.CENTER);
 
-        vbTrolleyPage = new VBox(15, laPageTitle, taTrolley, hbBtns);
+        vbTrolleyPage = new VBox(15, laPageTitle, lvTrolley, hbBtns);
         vbTrolleyPage.setPrefWidth(COLUMN_WIDTH);
         vbTrolleyPage.setAlignment(Pos.TOP_CENTER);
         vbTrolleyPage.setStyle("-fx-padding: 15px;");
         return vbTrolleyPage;
+    }
+
+    public int getSelectedTrolleyIndex() {
+        return lvTrolley.getSelectionModel().getSelectedIndex();
     }
 
     private VBox createReceiptPage() {
@@ -196,6 +203,9 @@ public class CustomerView  {
             if(action.equals("OK & Close")){
                 showTrolleyOrReceiptPage(vbTrolleyPage);
             }
+            if(action.equals("Delete Selected")){
+                cusController.doAction("Delete");
+            }
             cusController.doAction(action);
         }
         catch(SQLException e){
@@ -210,7 +220,13 @@ public class CustomerView  {
 
         ivProduct.setImage(new Image(imageName));
         lbProductInfo.setText(searchResult);
-        taTrolley.setText(trolley);
+        // Update ListView instead of TextArea
+        if (trolley != null && !trolley.isEmpty()) {
+            lvTrolley.getItems().setAll(trolley.split("\n"));
+        } else {
+            lvTrolley.getItems().clear();
+        }
+
         if (!receipt.equals("")) {
             showTrolleyOrReceiptPage(vbReceiptPage);
             taReceipt.setText(receipt);

@@ -93,10 +93,20 @@ public class CustomerModel {
         trolley.add(newProduct);
         sortTrolley();
     }
+    //for sorting ProductId in Ascending order
     private void sortTrolley() {
         trolley.sort((a,b) -> a.getProductId().compareTo(b.getProductId()));
     }
 
+
+    void deleteSelected() {
+        int index = cusView.getSelectedTrolleyIndex();
+        if (index >= 0 && index < trolley.size()) {
+            trolley.remove(index);
+            displayTaTrolley = ProductListFormatter.buildString(trolley);
+            updateView();
+        }
+    }
 
     void checkOut() throws IOException, SQLException {
         if(!trolley.isEmpty()){
