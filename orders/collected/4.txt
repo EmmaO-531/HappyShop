@@ -1,14 +1,13 @@
 Order ID: 4 
 State: Collected
-OrderedDateTime: 2025-11-25 16:05:46 
-ProgressingDateTime: 2025-11-25 16:05:56
-CollectedDateTime: 2025-11-25 16:06:00
+OrderedDateTime: 2026-01-15 21:06:24 
+ProgressingDateTime: 2026-01-15 21:14:34
+CollectedDateTime: 2026-01-15 21:14:34
 Items:
- 0001    40 inch TV         ( 1) £ 269.00
- 0001    40 inch TV         ( 1) £ 269.00
- 0001    40 inch TV         ( 1) £ 269.00
- 0001    40 inch TV         ( 1) £ 269.00
- 0001    40 inch TV         ( 1) £ 269.00
+ 0001    40 inch TV         ( 5) £1345.00
+ 0002    DAB Radio          ( 2) £  59.98
+ 0003    Toaster            ( 2) £  39.98
+ 0011    USB5 drive         ( 1) £  10.99
 --------------------------------------------
- Total                               £1345.00
+ Total                               £1455.95
 

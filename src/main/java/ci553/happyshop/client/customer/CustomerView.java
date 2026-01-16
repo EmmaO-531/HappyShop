@@ -1,5 +1,8 @@
 package ci553.happyshop.client.customer;
 
+import org.junit.jupiter.api.Test;
+
+
 import ci553.happyshop.utility.UIStyle;
 import ci553.happyshop.utility.WinPosManager;
 import ci553.happyshop.utility.WindowBounds;
@@ -36,6 +39,7 @@ public class CustomerView  {
     private HBox hbRoot; // Top-level layout manager
     private VBox vbTrolleyPage;  //vbTrolleyPage and vbReceiptPage will swap with each other when need
     private VBox vbReceiptPage;
+
 
     TextField tfId; //for user input on the search page. Made accessible so it can be accessed or modified by CustomerModel
     TextField tfName; //for user input on the search page. Made accessible so it can be accessed by CustomerModel
@@ -202,9 +206,6 @@ public class CustomerView  {
             }
             if(action.equals("OK & Close")){
                 showTrolleyOrReceiptPage(vbTrolleyPage);
-            }
-            if(action.equals("Delete Selected")){
-                cusController.doAction("Delete");
             }
             cusController.doAction(action);
         }
