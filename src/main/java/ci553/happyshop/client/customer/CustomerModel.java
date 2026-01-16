@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+
 /**
  * TODO
  * You can either directly modify the CustomerModel class to implement the required tasks,
@@ -24,6 +25,7 @@ public class CustomerModel {
     public CustomerView cusView;
     public DatabaseRW databaseRW; //Interface type, not specific implementation
                                   //Benefits: Flexibility: Easily change the database implementation.
+    public RemoveProductNotifier removeProductNotifier;
 
     private Product theProduct =null; // product found from search
     private ArrayList<Product> trolley =  new ArrayList<>(); // a list of products in trolley
@@ -65,12 +67,12 @@ public class CustomerModel {
     void addToTrolley(){
         if(theProduct!= null){
 
-            // trolley.add(theProduct) — Product is appended to the end of the trolley.
-            // To keep the trolley organized, add code here or call a method that:
-            //TODO
-            // 1. Merges items with the same product ID (combining their quantities).
-            // 2. Sorts the products in the trolley by product ID.
-            trolley.add(theProduct);
+            //so addToTrolley uses quantity
+            int qty = cusView.getSelectedQuantity();
+            theProduct.setOrderedQuantity(qty);
+
+            // merges and sorts trolley
+            add_or_merge(theProduct);
             displayTaTrolley = ProductListFormatter.buildString(trolley); //build a String for trolley so that we can show it
         }
         else{
@@ -80,6 +82,33 @@ public class CustomerModel {
         displayTaReceipt=""; // Clear receipt to switch back to trolleyPage (receipt shows only when not empty)
         updateView();
     }
+    private void add_or_merge(Product newProduct) {
+        for (Product p : trolley) {
+            if (p.getProductId().equals(newProduct.getProductId())) {
+                //increases quantity instead of adding duplicate
+                p.setOrderedQuantity(p.getOrderedQuantity() + newProduct.getOrderedQuantity());
+                sortTrolley();
+                return;
+            }
+        }
+        //add new product if no others exist
+        trolley.add(newProduct);
+        sortTrolley();
+    }
+    //for sorting ProductId in Ascending order
+    private void sortTrolley() {
+        trolley.sort((a,b) -> a.getProductId().compareTo(b.getProductId()));
+    }
+
+
+    void deleteSelected() {
+        int index = cusView.getSelectedTrolleyIndex();
+        if (index >= 0 && index < trolley.size()) {
+            trolley.remove(index);
+            displayTaTrolley = ProductListFormatter.buildString(trolley);
+            updateView();
+        }
+    }
 
     void checkOut() throws IOException, SQLException {
         if(!trolley.isEmpty()){
@@ -88,8 +117,8 @@ public class CustomerModel {
             // If any products are insufficient, the update will be rolled back.
             // If all products are sufficient, the database will be updated, and insufficientProducts will be empty.
             // Note: If the trolley is already organized (merged and sorted), grouping is unnecessary.
-            ArrayList<Product> groupedTrolley= groupProductsById(trolley);
-            ArrayList<Product> insufficientProducts= databaseRW.purchaseStocks(groupedTrolley);
+            ArrayList<Product> groupedTrolley = groupProductsById(trolley);
+            ArrayList<Product> insufficientProducts = databaseRW.purchaseStocks(groupedTrolley);
 
             if(insufficientProducts.isEmpty()){ // If stock is sufficient for all products
                 //get OrderHub and tell it to make a new Order
@@ -106,13 +135,31 @@ public class CustomerModel {
                 System.out.println(displayTaReceipt);
             }
             else{ // Some products have insufficient stock — build an error message to inform the customer
-                StringBuilder errorMsg = new StringBuilder();
-                for(Product p : insufficientProducts){
-                    errorMsg.append("\u2022 "+ p.getProductId()).append(", ")
+                StringBuilder errorMsg = new StringBuilder(
+                        "The following products were removed due to insufficient stock:\n\n"
+                );
+                for (Product p : insufficientProducts) {
+                    errorMsg.append("\u2022 ")
+                            .append(p.getProductId()).append(", ")
                             .append(p.getProductDescription()).append(" (Only ")
                             .append(p.getStockQuantity()).append(" available, ")
                             .append(p.getOrderedQuantity()).append(" requested)\n");
                 }
+                // Remove insufficient products from trolley
+                removeInsufficientProducts(insufficientProducts);
+
+                // Update trolley display
+                displayTaTrolley = ProductListFormatter.buildString(trolley);
+
+                // Show popup window
+                if (removeProductNotifier != null) {
+                    removeProductNotifier.showRemovalMsg(errorMsg.toString());
+                }
+                //if (removeProductNotifier != null) {
+                    //removeProductNotifier.closeNotifierWindow();
+                }
+
+
                 theProduct=null;
 
                 //TODO
@@ -120,10 +167,7 @@ public class CustomerModel {
                 // 1. Remove products with insufficient stock from the trolley.
                 // 2. Trigger a message window to notify the customer about the insufficient stock, rather than directly changing displayLaSearchResult.
                 //You can use the provided RemoveProductNotifier class and its showRemovalMsg method for this purpose.
-                //remember close the message window where appropriate (using method closeNotifierWindow() of RemoveProductNotifier class)
-                displayLaSearchResult = "Checkout failed due to insufficient stock for the following products:\n" + errorMsg.toString();
-                System.out.println("stock is not enough");
-            }
+                //remember close the message window where appropriate (using method closeNotifierWindow() of RemoveProductNotifier class
         }
         else{
             displayTaTrolley = "Your trolley is empty";
@@ -131,6 +175,16 @@ public class CustomerModel {
         }
         updateView();
     }
+
+    private void removeInsufficientProducts(ArrayList<Product> insufficientProducts) {
+        trolley.removeIf(trolleyProduct ->
+                insufficientProducts.stream().anyMatch(insufficient ->
+                        insufficient.getProductId().equals(trolleyProduct.getProductId())
+                )
+        );
+    }
+
+
 
     /**
      * Groups products by their productId to optimize database queries and updates.
@@ -144,9 +198,16 @@ public class CustomerModel {
                 Product existing = grouped.get(id);
                 existing.setOrderedQuantity(existing.getOrderedQuantity() + p.getOrderedQuantity());
             } else {
-                // Make a shallow copy to avoid modifying the original
-                grouped.put(id,new Product(p.getProductId(),p.getProductDescription(),
-                        p.getProductImageName(),p.getUnitPrice(),p.getStockQuantity()));
+                Product copy = new Product(
+                        p.getProductId(),
+                        p.getProductDescription(),
+                        p.getProductImageName(),
+                        p.getUnitPrice(),
+                        p.getStockQuantity()
+                );
+                copy.setOrderedQuantity(p.getOrderedQuantity());
+
+                grouped.put(id, copy);
             }
         }
         return new ArrayList<>(grouped.values());
@@ -155,8 +216,12 @@ public class CustomerModel {
     void cancel(){
         trolley.clear();
         displayTaTrolley="";
+        if (removeProductNotifier != null) {
+            removeProductNotifier.closeNotifierWindow();
+        }
         updateView();
     }
+
     void closeReceipt(){
         displayTaReceipt="";
     }

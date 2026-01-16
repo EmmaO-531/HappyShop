@@ -1,5 +1,8 @@
 package ci553.happyshop.client.customer;
 
+import org.junit.jupiter.api.Test;
+
+
 import ci553.happyshop.utility.UIStyle;
 import ci553.happyshop.utility.WinPosManager;
 import ci553.happyshop.utility.WindowBounds;
@@ -37,8 +40,10 @@ public class CustomerView  {
     private VBox vbTrolleyPage;  //vbTrolleyPage and vbReceiptPage will swap with each other when need
     private VBox vbReceiptPage;
 
+
     TextField tfId; //for user input on the search page. Made accessible so it can be accessed or modified by CustomerModel
     TextField tfName; //for user input on the search page. Made accessible so it can be accessed by CustomerModel
+    private Spinner<Integer> spQuantity; //for quantity selector in trolley
 
     //four controllers needs updating when program going on
     private ImageView ivProduct; //image area in searchPage
@@ -74,6 +79,11 @@ public class CustomerView  {
         window.show();
         viewWindow=window;// Sets viewWindow to this window for future reference and management.
     }
+    //getter for quantity selector
+    public int getSelectedQuantity() {
+        return spQuantity.getValue();
+    }
+
 
     private VBox createSearchPage() {
         Label laPageTitle = new Label("Search by Product ID/Name");
@@ -92,6 +102,15 @@ public class CustomerView  {
         tfName.setPromptText("implement it if you want");
         tfName.setStyle(UIStyle.textFiledStyle);
         HBox hbName = new HBox(10, laName, tfName);
+
+        //for quantity selector
+        Label laQty = new Label("Qty:");
+        laQty.setStyle(UIStyle.labelStyle);
+        spQuantity = new Spinner<>(1, 99, 1);
+        spQuantity.setEditable(false);
+        spQuantity.setPrefWidth(80);
+        HBox hbQty = new HBox(10, laQty, spQuantity);
+
 
         Label laPlaceHolder = new Label(  " ".repeat(15)); //create left-side spacing so that this HBox aligns with others in the layout.
         Button btnSearch = new Button("Search");
@@ -115,7 +134,7 @@ public class CustomerView  {
         HBox hbSearchResult = new HBox(5, ivProduct, lbProductInfo);
         hbSearchResult.setAlignment(Pos.CENTER_LEFT);
 
-        VBox vbSearchPage = new VBox(15, laPageTitle, hbId, hbName, hbBtns, hbSearchResult);
+        VBox vbSearchPage = new VBox(15, laPageTitle, hbId, hbName, hbQty, hbBtns, hbSearchResult);
         vbSearchPage.setPrefWidth(COLUMN_WIDTH);
         vbSearchPage.setAlignment(Pos.TOP_CENTER);
         vbSearchPage.setStyle("-fx-padding: 15px;");
@@ -123,13 +142,17 @@ public class CustomerView  {
         return vbSearchPage;
     }
 
+    private ListView<String> lvTrolley;
     private VBox CreateTrolleyPage() {
         Label laPageTitle = new Label("🛒🛒  Trolley 🛒🛒");
         laPageTitle.setStyle(UIStyle.labelTitleStyle);
 
-        taTrolley = new TextArea();
-        taTrolley.setEditable(false);
-        taTrolley.setPrefSize(WIDTH/2, HEIGHT-50);
+        lvTrolley = new ListView<>();
+        lvTrolley.setPrefSize(WIDTH / 2, HEIGHT - 140);
+
+        Button btnDelete = new Button("Delete");
+        btnDelete.setStyle(UIStyle.buttonStyle);
+        btnDelete.setOnAction(this::buttonClicked);
 
         Button btnCancel = new Button("Cancel");
         btnCancel.setOnAction(this::buttonClicked);
@@ -139,15 +162,18 @@ public class CustomerView  {
         btnCheckout.setOnAction(this::buttonClicked);
         btnCheckout.setStyle(UIStyle.buttonStyle);
 
-        HBox hbBtns = new HBox(10, btnCancel,btnCheckout);
-        hbBtns.setStyle("-fx-padding: 15px;");
+        HBox hbBtns = new HBox(10, btnDelete, btnCancel,btnCheckout);
         hbBtns.setAlignment(Pos.CENTER);
 
-        vbTrolleyPage = new VBox(15, laPageTitle, taTrolley, hbBtns);
+        vbTrolleyPage = new VBox(15, laPageTitle, lvTrolley, hbBtns);
         vbTrolleyPage.setPrefWidth(COLUMN_WIDTH);
         vbTrolleyPage.setAlignment(Pos.TOP_CENTER);
         vbTrolleyPage.setStyle("-fx-padding: 15px;");
         return vbTrolleyPage;
+    }
+
+    public int getSelectedTrolleyIndex() {
+        return lvTrolley.getSelectionModel().getSelectedIndex();
     }
 
     private VBox createReceiptPage() {
@@ -195,7 +221,13 @@ public class CustomerView  {
 
         ivProduct.setImage(new Image(imageName));
         lbProductInfo.setText(searchResult);
-        taTrolley.setText(trolley);
+        // Update ListView instead of TextArea
+        if (trolley != null && !trolley.isEmpty()) {
+            lvTrolley.getItems().setAll(trolley.split("\n"));
+        } else {
+            lvTrolley.getItems().clear();
+        }
+
         if (!receipt.equals("")) {
             showTrolleyOrReceiptPage(vbReceiptPage);
             taReceipt.setText(receipt);
